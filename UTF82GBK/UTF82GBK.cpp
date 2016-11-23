@@ -208,6 +208,57 @@ void EnumRoot(KEYVALMAP & mFileList, const _TCHAR * ptRootPath = _T("."), const 
 	}
 }
 
+void ReadFileType(int & nFileType, _TCHAR * pFileName)
+{
+	long lCharSize = 0;
+	long lFileSize = 0;
+	char * pszData = 0;
+	FILE * pFile = _tfopen(pFileName, _T("rb"));
+	if (pFile)
+	{
+		fseek(pFile, 0, SEEK_END);
+		lFileSize = ftell(pFile);
+		fseek(pFile, 0, SEEK_SET);
+		
+		pszData = (char *)malloc(lFileSize * sizeof(char));
+		if (pszData)
+		{
+			fread(pszData, lFileSize, sizeof(char), pFile);
+
+			if (!memicmp(pszData, "\xFF\xFE", 2 * sizeof(char)))
+			{
+				//unicode±àÂë
+			} else 
+			if (!memicmp(pszData, "\xFE\xFF", 2 * sizeof(char)))
+			{
+				//unicode-big-endian±àÂë
+			} else
+			if (!memicmp(pszData, "\xEF\xBB\xBF", 2 * sizeof(char)))
+			{
+				//utf-8±àÂë
+			}
+			else
+			{
+
+			}
+
+			for (long lIdx = 0; lIdx < lFileSize; lIdx++)
+			{
+				if ((unsigned char)pszData[lIdx] >= 0x00 &&
+					(unsigned char)pszData[lIdx] <= 0x80)
+				{
+					lCharSize += 1;
+				}
+			}
+			_tprintf(_T("%s\nstrlen:%ld, All:%ld, Characters:%ld, Others:%ld.\n"), pFileName, strlen(pszData), lFileSize, lCharSize, lFileSize - lCharSize);
+			free(pszData);
+			pszData = 0;
+		}
+		fclose(pFile);
+		pFile = 0;
+	}
+}
+
 void ConvertMultiFiles(KEYVALMAP & mFileList)
 {
 	FILE * pSrcFile = 0;
@@ -275,6 +326,20 @@ void ConvertMultiFiles(KEYVALMAP & mFileList)
 
 }
 
+int _tmain(int argc, _TCHAR ** argv)
+{
+	int result = 0;
+
+	int nFileType = 0;
+	ReadFileType(nFileType, _T("D:\\ansi.txt"));
+	ReadFileType(nFileType, _T("D:\\utf8.txt"));
+	ReadFileType(nFileType, _T("D:\\unicode.txt"));
+	ReadFileType(nFileType, _T("D:\\unicode-big-endian.txt"));
+	ReadFileType(nFileType, _T("D:\\scheduler.py"));
+
+	return result;
+}
+
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPTSTR    lpCmdLine,
@@ -283,6 +348,12 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
+	int nFileType = 0;
+	ReadFileType(nFileType, _T("D:\\ansi.txt"));
+	ReadFileType(nFileType, _T("D:\\utf8.txt"));
+	ReadFileType(nFileType, _T("D:\\unicode.txt"));
+	ReadFileType(nFileType, _T("D:\\unicode-big-endian.txt"));
+	ReadFileType(nFileType, _T("D:\\scheduler.py"));
     // TODO: Place code here.
 	if (__argc == 3)
 	{
